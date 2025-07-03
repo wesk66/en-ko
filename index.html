@@ -114,7 +114,6 @@
     let timeout = null;
     let lastValidText = '';
 
-    // helper
     function countWords(text) {
       return text.trim().split(/\s+/).filter(Boolean).length;
     }
@@ -161,22 +160,11 @@
 
     input.addEventListener("keydown", (e) => {
       const text = input.innerText.toLowerCase();
-      const wordCount = countWords(text);
       const charCount = text.replace(/\n/g, '').length;
 
-      if (e.key === "Enter") {
-        e.preventDefault();
-        return;
-      }
-
-      // block space if already 5 words
-      if (e.key === " " && wordCount >= 5) {
-        e.preventDefault();
-        return;
-      }
-
-      // block all typing if char limit reached
-      if (charCount >= 25 && !["Backspace", "Delete", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
+      // block typing if 25+ characters already
+      const allowedKeys = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"];
+      if (charCount >= 25 && !allowedKeys.includes(e.key)) {
         e.preventDefault();
         return;
       }
@@ -187,11 +175,12 @@
 
       // trim to 5 words max
       let words = text.trim().split(/\s+/).filter(Boolean).slice(0, 5);
-      text = words.join(" ").slice(0, 25); // max 25 characters
+      text = words.join(" ").slice(0, 25); // also trim to 25 chars max
 
       input.innerText = text;
       lastValidText = text;
 
+      // move caret to end
       const range = document.createRange();
       const sel = window.getSelection();
       range.selectNodeContents(input);
