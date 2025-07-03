@@ -37,7 +37,7 @@
       border: none;
       outline: none;
       font-size: 2.5em;
-      text-align: left; /* typing starts at beginning */
+      text-align: left;
       max-width: 90%;
       word-wrap: break-word;
       line-height: 1.4;
@@ -45,8 +45,24 @@
       padding: 4px 8px;
       user-select: text;
       cursor: text;
-      white-space: nowrap; /* prevent line breaks */
-      overflow-x: auto; /* scroll horizontally if too long */
+      white-space: nowrap;
+      overflow-x: auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* hidden clone for measuring */
+    #clone {
+      position: absolute;
+      visibility: hidden;
+      white-space: nowrap;
+      font-size: 2.5em;
+      font-family: 'Chiron Sung HK', 'Noto Sans KR', serif;
+      text-transform: lowercase;
+      top: 0; left: 0;
+      pointer-events: none;
+      user-select: none;
+      z-index: 0;
     }
 
     .fade-piece {
@@ -56,14 +72,21 @@
       opacity: 1;
       transition: transform 1s ease, opacity 1.5s ease;
       white-space: pre;
+      font-family: 'Chiron Sung HK', 'Noto Sans KR', serif;
+      text-transform: lowercase;
+      color: black;
+      user-select: none;
+      z-index: 10;
     }
   </style>
 </head>
 <body>
   <div id="input" contenteditable="true" spellcheck="false" autofocus aria-label="type here"></div>
+  <div id="clone" aria-hidden="true"></div>
 
   <script>
     const input = document.getElementById("input");
+    const clone = document.getElementById("clone");
     let timeout = null;
 
     // prevent Enter key adding new lines
@@ -77,38 +100,55 @@
       return text.trim().split(/\s+/).filter(Boolean).length;
     }
 
-    function dissolveText(text) {
-      if (!text.trim()) return; // ignore empty text
-
-      const rect = input.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-
-      [...text].forEach((char) => {
-        const span = document.createElement("span");
+    // create a span for each character in clone, positioned to match input text
+    function buildCloneSpans(text) {
+      clone.innerHTML = '';
+      [...text].forEach(char => {
+        const span = document.createElement('span');
         span.textContent = char;
-        span.className = "fade-piece";
+        clone.appendChild(span);
+      });
+    }
 
+    function dissolveText(text) {
+      if (!text.trim()) return;
+
+      buildCloneSpans(text);
+
+      // get bounding rect of input relative to viewport
+      const inputRect = input.getBoundingClientRect();
+
+      // for each char span in clone, get position and spawn fade-piece there
+      const spans = [...clone.children];
+      spans.forEach(span => {
+        const charRect = span.getBoundingClientRect();
+
+        const piece = document.createElement('span');
+        piece.className = 'fade-piece';
+        piece.textContent = span.textContent;
+
+        // position relative to viewport - position:absolute is relative to viewport because no positioned ancestor
+        piece.style.left = `${charRect.left}px`;
+        piece.style.top = `${charRect.top}px`;
+
+        document.body.appendChild(piece);
+
+        // random explode offset
         const offsetX = (Math.random() - 0.5) * 300;
         const offsetY = (Math.random() - 0.5) * 300;
-        const angle = Math.random() * 360;
-
-        span.style.left = `${centerX}px`;
-        span.style.top = `${centerY}px`;
-
-        document.body.appendChild(span);
+        const angle = (Math.random() - 0.5) * 720; // rotate more freely
 
         requestAnimationFrame(() => {
-          span.style.transform = `translate(${offsetX}px, ${offsetY}px) rotate(${angle}deg)`;
-          span.style.opacity = 0;
+          piece.style.transform = `translate(${offsetX}px, ${offsetY}px) rotate(${angle}deg)`;
+          piece.style.opacity = 0;
         });
 
         setTimeout(() => {
-          span.remove();
+          piece.remove();
         }, 1800);
       });
 
-      input.innerText = "";
+      input.innerText = '';
       input.focus();
     }
 
