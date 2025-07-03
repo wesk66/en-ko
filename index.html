@@ -5,7 +5,7 @@
   <title>text ghost</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Reliable Chiron Sung HK font import -->
+  <!-- Chiron Sung HK font -->
   <link href="https://cdn.jsdelivr.net/gh/luxemberg/fonts/chiron-sung-hk/ChironSungHK-Regular.otf" rel="stylesheet" />
 
   <style>
@@ -33,17 +33,15 @@
       align-items: center;
       overflow: hidden;
       position: relative;
-      padding: 20px;
     }
 
     #container {
       position: relative;
       width: 320px;
       height: 200px;
-      border: 1px solid rgba(0,0,0,0.1);
       padding: 10px 15px;
       box-sizing: border-box;
-      overflow: hidden; /* no scroll */
+      overflow: hidden;
       display: flex;
       align-items: flex-start;
       background: transparent;
@@ -53,7 +51,7 @@
       background: transparent;
       border: none;
       outline: none;
-      font-size: 1.6em;          /* smaller font */
+      font-size: 2.0rem;
       text-align: left;
       line-height: 1.4;
       user-select: text;
@@ -62,7 +60,6 @@
       color: black;
       width: 100%;
       height: 100%;
-      /* columns */
       column-width: 150px;
       column-count: 5;
       column-gap: 1em;
@@ -81,7 +78,7 @@
       left: 0;
       visibility: hidden;
       white-space: nowrap;
-      font-size: 1.6em;        /* smaller font */
+      font-size: 2.0rem;
       font-family: 'Chiron Sung HK', 'Noto Sans KR', serif;
       text-transform: lowercase;
       pointer-events: none;
@@ -91,7 +88,7 @@
 
     .fade-piece {
       position: fixed;
-      font-size: 1.6em;        /* smaller font */
+      font-size: 2.0rem;
       pointer-events: none;
       opacity: 1;
       transition: transform 1s ease, opacity 1.5s ease;
@@ -107,28 +104,21 @@
 </head>
 <body>
   <div id="container">
-    <div id="input" contenteditable="true" spellcheck="false" autofocus aria-label="type here" role="textbox" aria-multiline="false"></div>
-    <div id="clone" aria-hidden="true"></div>
+    <div id="input" contenteditable="true" spellcheck="false" autofocus></div>
+    <div id="clone"></div>
   </div>
 
   <script>
     const input = document.getElementById("input");
     const clone = document.getElementById("clone");
     let timeout = null;
+    let lastValidText = '';
 
-    // prevent Enter key adding new lines
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-      }
-    });
-
-    // word count helper
+    // helper
     function countWords(text) {
       return text.trim().split(/\s+/).filter(Boolean).length;
     }
 
-    // build clone spans for measuring character positions
     function buildCloneSpans(text) {
       clone.innerHTML = '';
       [...text].forEach(char => {
@@ -142,19 +132,15 @@
       if (!text.trim()) return;
 
       buildCloneSpans(text);
-
       const spans = [...clone.children];
 
       spans.forEach(span => {
-        const charRect = span.getBoundingClientRect();
-
+        const rect = span.getBoundingClientRect();
         const piece = document.createElement('span');
         piece.className = 'fade-piece';
         piece.textContent = span.textContent;
-
-        piece.style.left = `${charRect.left}px`;
-        piece.style.top = `${charRect.top}px`;
-
+        piece.style.left = `${rect.left}px`;
+        piece.style.top = `${rect.top}px`;
         document.body.appendChild(piece);
 
         const offsetX = (Math.random() - 0.5) * 300;
@@ -166,30 +152,46 @@
           piece.style.opacity = 0;
         });
 
-        setTimeout(() => {
-          piece.remove();
-        }, 1800);
+        setTimeout(() => piece.remove(), 1800);
       });
 
       input.innerText = '';
       input.focus();
     }
 
-    // Store last valid text so we can revert if overflow
-    let lastValidText = '';
+    input.addEventListener("keydown", (e) => {
+      const text = input.innerText.toLowerCase();
+      const wordCount = countWords(text);
+      const charCount = text.replace(/\n/g, '').length;
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        return;
+      }
+
+      // block space if already 5 words
+      if (e.key === " " && wordCount >= 5) {
+        e.preventDefault();
+        return;
+      }
+
+      // block all typing if char limit reached
+      if (charCount >= 25 && !["Backspace", "Delete", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
+        e.preventDefault();
+        return;
+      }
+    });
 
     input.addEventListener("input", () => {
       let text = input.innerText.replace(/\n/g, " ").toLowerCase();
 
-      // limit max 20 words
-      if (countWords(text) > 20) {
-        text = text.split(/\s+/).slice(0, 20).join(" ");
-      }
+      // trim to 5 words max
+      let words = text.trim().split(/\s+/).filter(Boolean).slice(0, 5);
+      text = words.join(" ").slice(0, 25); // max 25 characters
 
-      // Temporarily update input text to lowercase trimmed
       input.innerText = text;
+      lastValidText = text;
 
-      // Place cursor at end
       const range = document.createRange();
       const sel = window.getSelection();
       range.selectNodeContents(input);
@@ -197,29 +199,8 @@
       sel.removeAllRanges();
       sel.addRange(range);
 
-      // Check if input content fits in container (no vertical overflow)
-      const isOverflowing = input.scrollHeight > input.clientHeight;
-
-      if (isOverflowing) {
-        // revert to last valid text if overflow
-        input.innerText = lastValidText;
-
-        // reset cursor at end after revert
-        const range2 = document.createRange();
-        const sel2 = window.getSelection();
-        range2.selectNodeContents(input);
-        range2.collapse(false);
-        sel2.removeAllRanges();
-        sel2.addRange(range2);
-      } else {
-        // update last valid text
-        lastValidText = text;
-      }
-
       clearTimeout(timeout);
-      timeout = setTimeout(() => {
-        dissolveText(lastValidText);
-      }, 2000);
+      timeout = setTimeout(() => dissolveText(lastValidText), 2000);
     });
   </script>
 </body>
