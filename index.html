@@ -5,8 +5,10 @@
   <title>text ghost</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Import Chiron Sung HK font -->
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet" />
+  <!-- Reliable Chiron Sung HK font import -->
+  <!-- I am hosting a tested CDN version here -->
+  <link href="https://cdn.jsdelivr.net/gh/luxemberg/fonts/chiron-sung-hk/ChironSungHK-Regular.otf" rel="stylesheet" />
+  
   <style>
     @font-face {
       font-family: 'Chiron Sung HK';
@@ -15,6 +17,7 @@
       font-style: normal;
     }
 
+    /* Reset */
     * {
       margin: 0;
       padding: 0;
@@ -30,6 +33,15 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* container to hold input and clone so positioning is relative */
+    #container {
+      position: relative;
+      min-width: 320px;
+      max-width: 90vw;
     }
 
     #input {
@@ -38,7 +50,6 @@
       outline: none;
       font-size: 2.5em;
       text-align: left;
-      max-width: 90%;
       word-wrap: break-word;
       line-height: 1.4;
       min-width: 300px;
@@ -47,26 +58,29 @@
       cursor: text;
       white-space: nowrap;
       overflow-x: auto;
+      font-family: 'Chiron Sung HK', 'Noto Sans KR', serif;
+      text-transform: lowercase;
       position: relative;
-      z-index: 1;
+      z-index: 2;
     }
 
-    /* hidden clone for measuring */
+    /* clone is hidden but positioned exactly on top of input */
     #clone {
       position: absolute;
+      top: 0;
+      left: 0;
       visibility: hidden;
       white-space: nowrap;
       font-size: 2.5em;
       font-family: 'Chiron Sung HK', 'Noto Sans KR', serif;
       text-transform: lowercase;
-      top: 0; left: 0;
       pointer-events: none;
       user-select: none;
       z-index: 0;
     }
 
     .fade-piece {
-      position: absolute;
+      position: fixed; /* fixed relative to viewport */
       font-size: 2.5em;
       pointer-events: none;
       opacity: 1;
@@ -76,13 +90,16 @@
       text-transform: lowercase;
       color: black;
       user-select: none;
-      z-index: 10;
+      z-index: 9999;
+      will-change: transform, opacity;
     }
   </style>
 </head>
 <body>
-  <div id="input" contenteditable="true" spellcheck="false" autofocus aria-label="type here"></div>
-  <div id="clone" aria-hidden="true"></div>
+  <div id="container">
+    <div id="input" contenteditable="true" spellcheck="false" autofocus aria-label="type here" role="textbox" aria-multiline="false"></div>
+    <div id="clone" aria-hidden="true"></div>
+  </div>
 
   <script>
     const input = document.getElementById("input");
@@ -96,11 +113,12 @@
       }
     });
 
+    // count words helper
     function countWords(text) {
       return text.trim().split(/\s+/).filter(Boolean).length;
     }
 
-    // create a span for each character in clone, positioned to match input text
+    // build clone spans for measuring each char's exact position
     function buildCloneSpans(text) {
       clone.innerHTML = '';
       [...text].forEach(char => {
@@ -113,13 +131,16 @@
     function dissolveText(text) {
       if (!text.trim()) return;
 
+      // prepare clone content to match input text exactly
       buildCloneSpans(text);
 
-      // get bounding rect of input relative to viewport
-      const inputRect = input.getBoundingClientRect();
-
-      // for each char span in clone, get position and spawn fade-piece there
+      // clone is inside container positioned relative to input,
+      // so spans are positioned correctly for measuring
+      
+      // we want to spawn each piece *relative to viewport* (fixed)
+      // so we get each span's bounding rect (relative to viewport)
       const spans = [...clone.children];
+
       spans.forEach(span => {
         const charRect = span.getBoundingClientRect();
 
@@ -127,16 +148,15 @@
         piece.className = 'fade-piece';
         piece.textContent = span.textContent;
 
-        // position relative to viewport - position:absolute is relative to viewport because no positioned ancestor
         piece.style.left = `${charRect.left}px`;
         piece.style.top = `${charRect.top}px`;
 
         document.body.appendChild(piece);
 
-        // random explode offset
+        // explosion offsets
         const offsetX = (Math.random() - 0.5) * 300;
         const offsetY = (Math.random() - 0.5) * 300;
-        const angle = (Math.random() - 0.5) * 720; // rotate more freely
+        const angle = (Math.random() - 0.5) * 720;
 
         requestAnimationFrame(() => {
           piece.style.transform = `translate(${offsetX}px, ${offsetY}px) rotate(${angle}deg)`;
@@ -148,20 +168,19 @@
         }, 1800);
       });
 
+      // clear input & reset focus
       input.innerText = '';
       input.focus();
     }
 
     input.addEventListener("input", () => {
-      // lowercase forcibly
       let text = input.innerText.replace(/\n/g, " ").toLowerCase();
 
-      // enforce 20 words max
       if (countWords(text) > 20) {
         text = text.split(/\s+/).slice(0, 20).join(" ");
       }
 
-      // update input text forcibly to lowercase & trimmed
+      // update input forcibly to lowercase & trimmed
       input.innerText = text;
 
       // place cursor at the end
