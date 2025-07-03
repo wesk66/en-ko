@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>instant korean translator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+  <!-- Import Chiron Sung HK font -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: 'Chiron Sung HK';
+      src: url('https://cdn.jsdelivr.net/gh/luxemberg/fonts/chiron-sung-hk/ChironSungHK-Regular.otf') format('opentype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Chiron Sung HK', 'Noto Sans KR', serif;
+      text-transform: lowercase;
+    }
+
+    body, html {
+      height: 100%;
+      background: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #input {
+      background: transparent;
+      border: none;
+      outline: none;
+      font-size: 2em;
+      color: transparent;
+      caret-color: black;
+      text-align: center;
+      position: absolute;
+    }
+
+    #translation {
+      font-size: 2em;
+      color: black;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    input::placeholder {
+      color: transparent;
+    }
+  </style>
+</head>
+<body>
+  <input type="text" id="input" autocomplete="off" placeholder="type here..." autofocus />
+  <div id="translation"></div>
+
+  <script>
+    const input = document.getElementById("input");
+    const translationBox = document.getElementById("translation");
+    let debounceTimer;
+
+    input.addEventListener("input", () => {
+      const text = input.value.trim().toLowerCase();
+
+      clearTimeout(debounceTimer);
+      if (text === "") {
+        translationBox.textContent = "";
+        return;
+      }
+
+      debounceTimer = setTimeout(() => {
+        fetch("https://libretranslate.de/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            q: text,
+            source: "en",
+            target: "ko",
+            format: "text"
+          })
+        })
+          .then(res => res.json())
+          .then(data => {
+            translationBox.textContent = data.translatedText || "error";
+          })
+          .catch(() => {
+            translationBox.textContent = "translation failed.";
+          });
+      }, 300); // debounce
+    });
+  </script>
+</body>
+</html>
