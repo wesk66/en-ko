@@ -36,17 +36,14 @@
       padding: 20px;
     }
 
-    /* container to hold input and clone so positioning is relative */
     #container {
       position: relative;
-      width: 320px;   /* smaller width */
-      height: 200px;  /* fixed height */
-      border: 1px solid rgba(0,0,0,0.1); /* subtle border so user can see typing area */
+      width: 320px;
+      height: 200px;
+      border: 1px solid rgba(0,0,0,0.1);
       padding: 10px 15px;
       box-sizing: border-box;
-      overflow-y: auto; /* scroll vertically if needed */
-      overflow-x: hidden;
-      /* lock position in center */
+      overflow: hidden; /* no scroll */
       display: flex;
       align-items: flex-start;
       background: transparent;
@@ -56,37 +53,35 @@
       background: transparent;
       border: none;
       outline: none;
-      font-size: 2.2em;
+      font-size: 1.6em;          /* smaller font */
       text-align: left;
       line-height: 1.4;
       user-select: text;
       cursor: text;
-      white-space: normal; /* allow wrapping */
+      white-space: normal;
       color: black;
       width: 100%;
       height: 100%;
-      /* column layout */
-      column-width: 150px;     /* width of each column */
-      column-count: 5;         /* max 5 columns */
+      /* columns */
+      column-width: 150px;
+      column-count: 5;
       column-gap: 1em;
-      /* prevent line breaks caused by Enter */
       overflow-wrap: break-word;
       word-break: break-word;
-      overflow-y: auto;
       font-family: 'Chiron Sung HK', 'Noto Sans KR', serif;
       text-transform: lowercase;
       position: relative;
       z-index: 2;
+      overflow: hidden;
     }
 
-    /* clone is hidden but positioned exactly on top of input */
     #clone {
       position: absolute;
       top: 0;
       left: 0;
       visibility: hidden;
       white-space: nowrap;
-      font-size: 2.2em;
+      font-size: 1.6em;        /* smaller font */
       font-family: 'Chiron Sung HK', 'Noto Sans KR', serif;
       text-transform: lowercase;
       pointer-events: none;
@@ -96,7 +91,7 @@
 
     .fade-piece {
       position: fixed;
-      font-size: 2.2em;
+      font-size: 1.6em;        /* smaller font */
       pointer-events: none;
       opacity: 1;
       transition: transform 1s ease, opacity 1.5s ease;
@@ -128,12 +123,12 @@
       }
     });
 
-    // count words helper
+    // word count helper
     function countWords(text) {
       return text.trim().split(/\s+/).filter(Boolean).length;
     }
 
-    // build clone spans for measuring each char's exact position
+    // build clone spans for measuring character positions
     function buildCloneSpans(text) {
       clone.innerHTML = '';
       [...text].forEach(char => {
@@ -146,14 +141,8 @@
     function dissolveText(text) {
       if (!text.trim()) return;
 
-      // prepare clone content to match input text exactly
       buildCloneSpans(text);
 
-      // clone is inside container positioned relative to input,
-      // so spans are positioned correctly for measuring
-
-      // we want to spawn each piece relative to viewport (fixed),
-      // so get each span's bounding rect (relative to viewport)
       const spans = [...clone.children];
 
       spans.forEach(span => {
@@ -168,7 +157,6 @@
 
         document.body.appendChild(piece);
 
-        // explosion offsets
         const offsetX = (Math.random() - 0.5) * 300;
         const offsetY = (Math.random() - 0.5) * 300;
         const angle = (Math.random() - 0.5) * 720;
@@ -183,22 +171,25 @@
         }, 1800);
       });
 
-      // clear input & reset focus
       input.innerText = '';
       input.focus();
     }
 
+    // Store last valid text so we can revert if overflow
+    let lastValidText = '';
+
     input.addEventListener("input", () => {
       let text = input.innerText.replace(/\n/g, " ").toLowerCase();
 
+      // limit max 20 words
       if (countWords(text) > 20) {
         text = text.split(/\s+/).slice(0, 20).join(" ");
       }
 
-      // update input forcibly to lowercase & trimmed
+      // Temporarily update input text to lowercase trimmed
       input.innerText = text;
 
-      // place cursor at the end
+      // Place cursor at end
       const range = document.createRange();
       const sel = window.getSelection();
       range.selectNodeContents(input);
@@ -206,9 +197,28 @@
       sel.removeAllRanges();
       sel.addRange(range);
 
+      // Check if input content fits in container (no vertical overflow)
+      const isOverflowing = input.scrollHeight > input.clientHeight;
+
+      if (isOverflowing) {
+        // revert to last valid text if overflow
+        input.innerText = lastValidText;
+
+        // reset cursor at end after revert
+        const range2 = document.createRange();
+        const sel2 = window.getSelection();
+        range2.selectNodeContents(input);
+        range2.collapse(false);
+        sel2.removeAllRanges();
+        sel2.addRange(range2);
+      } else {
+        // update last valid text
+        lastValidText = text;
+      }
+
       clearTimeout(timeout);
       timeout = setTimeout(() => {
-        dissolveText(text);
+        dissolveText(lastValidText);
       }, 2000);
     });
   </script>
