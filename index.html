@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>en-ko</title>
+  <title>text ghost</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  
+
   <!-- Import Chiron Sung HK font -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
   <style>
@@ -68,9 +68,7 @@
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
 
-      document.body.removeChild(input); // remove original
-
-      [...text].forEach((char, i) => {
+      [...text].forEach((char) => {
         const span = document.createElement("span");
         span.textContent = char;
         span.className = "fade-piece";
@@ -93,6 +91,9 @@
           span.remove();
         }, 1800);
       });
+
+      input.innerText = ""; // reset the text box
+      input.focus(); // allow new typing
     }
 
     input.addEventListener("input", () => {
