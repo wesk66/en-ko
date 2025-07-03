@@ -35,12 +35,19 @@
     #input {
       background: transparent;
       border: none;
+      border-bottom: 1px solid rgba(0,0,0,0.1); /* subtle underline so you can find it */
       outline: none;
       font-size: 2.5em;
       text-align: center;
       max-width: 90%;
       word-wrap: break-word;
       line-height: 1.4;
+      color: transparent; /* text invisible */
+      caret-color: black; /* caret visible */
+      min-width: 300px; /* wide enough for easy clicking */
+      padding: 4px 0;
+      user-select: text;
+      cursor: text;
     }
 
     .fade-piece {
@@ -53,7 +60,7 @@
   </style>
 </head>
 <body>
-  <div id="input" contenteditable="true" spellcheck="false" autofocus></div>
+  <div id="input" contenteditable="true" spellcheck="false" autofocus aria-label="type here"></div>
 
   <script>
     const input = document.getElementById("input");
