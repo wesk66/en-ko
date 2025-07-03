@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Import Chiron Sung HK font -->
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet" />
   <style>
     @font-face {
       font-family: 'Chiron Sung HK';
@@ -35,19 +35,18 @@
     #input {
       background: transparent;
       border: none;
-      border-bottom: 1px solid rgba(0,0,0,0.1); /* subtle underline so you can find it */
       outline: none;
       font-size: 2.5em;
-      text-align: center;
+      text-align: left; /* typing starts at beginning */
       max-width: 90%;
       word-wrap: break-word;
       line-height: 1.4;
-      color: transparent; /* text invisible */
-      caret-color: black; /* caret visible */
-      min-width: 300px; /* wide enough for easy clicking */
-      padding: 4px 0;
+      min-width: 300px;
+      padding: 4px 8px;
       user-select: text;
       cursor: text;
+      white-space: nowrap; /* prevent line breaks */
+      overflow-x: auto; /* scroll horizontally if too long */
     }
 
     .fade-piece {
@@ -56,6 +55,7 @@
       pointer-events: none;
       opacity: 1;
       transition: transform 1s ease, opacity 1.5s ease;
+      white-space: pre;
     }
   </style>
 </head>
@@ -66,11 +66,20 @@
     const input = document.getElementById("input");
     let timeout = null;
 
+    // prevent Enter key adding new lines
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+      }
+    });
+
     function countWords(text) {
       return text.trim().split(/\s+/).filter(Boolean).length;
     }
 
     function dissolveText(text) {
+      if (!text.trim()) return; // ignore empty text
+
       const rect = input.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;
       const centerY = rect.top + rect.height / 2;
@@ -99,16 +108,29 @@
         }, 1800);
       });
 
-      input.innerText = ""; // reset the text box
-      input.focus(); // allow new typing
+      input.innerText = "";
+      input.focus();
     }
 
     input.addEventListener("input", () => {
-      const text = input.innerText.replace(/\n/g, " ");
+      // lowercase forcibly
+      let text = input.innerText.replace(/\n/g, " ").toLowerCase();
+
+      // enforce 20 words max
       if (countWords(text) > 20) {
-        input.innerText = text.split(/\s+/).slice(0, 20).join(" ");
-        window.getSelection().collapse(input, 1);
+        text = text.split(/\s+/).slice(0, 20).join(" ");
       }
+
+      // update input text forcibly to lowercase & trimmed
+      input.innerText = text;
+
+      // place cursor at the end
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.selectNodeContents(input);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
 
       clearTimeout(timeout);
       timeout = setTimeout(() => {
