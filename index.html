@@ -6,9 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Reliable Chiron Sung HK font import -->
-  <!-- I am hosting a tested CDN version here -->
   <link href="https://cdn.jsdelivr.net/gh/luxemberg/fonts/chiron-sung-hk/ChironSungHK-Regular.otf" rel="stylesheet" />
-  
+
   <style>
     @font-face {
       font-family: 'Chiron Sung HK';
@@ -17,7 +16,6 @@
       font-style: normal;
     }
 
-    /* Reset */
     * {
       margin: 0;
       padding: 0;
@@ -35,29 +33,46 @@
       align-items: center;
       overflow: hidden;
       position: relative;
+      padding: 20px;
     }
 
     /* container to hold input and clone so positioning is relative */
     #container {
       position: relative;
-      min-width: 320px;
-      max-width: 90vw;
+      width: 320px;   /* smaller width */
+      height: 200px;  /* fixed height */
+      border: 1px solid rgba(0,0,0,0.1); /* subtle border so user can see typing area */
+      padding: 10px 15px;
+      box-sizing: border-box;
+      overflow-y: auto; /* scroll vertically if needed */
+      overflow-x: hidden;
+      /* lock position in center */
+      display: flex;
+      align-items: flex-start;
+      background: transparent;
     }
 
     #input {
       background: transparent;
       border: none;
       outline: none;
-      font-size: 2.5em;
+      font-size: 2.2em;
       text-align: left;
-      word-wrap: break-word;
       line-height: 1.4;
-      min-width: 300px;
-      padding: 4px 8px;
       user-select: text;
       cursor: text;
-      white-space: nowrap;
-      overflow-x: auto;
+      white-space: normal; /* allow wrapping */
+      color: black;
+      width: 100%;
+      height: 100%;
+      /* column layout */
+      column-width: 150px;     /* width of each column */
+      column-count: 5;         /* max 5 columns */
+      column-gap: 1em;
+      /* prevent line breaks caused by Enter */
+      overflow-wrap: break-word;
+      word-break: break-word;
+      overflow-y: auto;
       font-family: 'Chiron Sung HK', 'Noto Sans KR', serif;
       text-transform: lowercase;
       position: relative;
@@ -71,7 +86,7 @@
       left: 0;
       visibility: hidden;
       white-space: nowrap;
-      font-size: 2.5em;
+      font-size: 2.2em;
       font-family: 'Chiron Sung HK', 'Noto Sans KR', serif;
       text-transform: lowercase;
       pointer-events: none;
@@ -80,8 +95,8 @@
     }
 
     .fade-piece {
-      position: fixed; /* fixed relative to viewport */
-      font-size: 2.5em;
+      position: fixed;
+      font-size: 2.2em;
       pointer-events: none;
       opacity: 1;
       transition: transform 1s ease, opacity 1.5s ease;
@@ -136,9 +151,9 @@
 
       // clone is inside container positioned relative to input,
       // so spans are positioned correctly for measuring
-      
-      // we want to spawn each piece *relative to viewport* (fixed)
-      // so we get each span's bounding rect (relative to viewport)
+
+      // we want to spawn each piece relative to viewport (fixed),
+      // so get each span's bounding rect (relative to viewport)
       const spans = [...clone.children];
 
       spans.forEach(span => {
