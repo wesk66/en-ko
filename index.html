@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>text dissolve smaller pulse, 1s delay</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>text dissolve with start popup and no zoom</title>
 <style>
   @font-face {
     font-family: 'Chiron Sung HK';
@@ -21,6 +21,7 @@
     justify-content: center;
     align-items: center;
     overflow: hidden;
+    touch-action: manipulation; /* help block zoom gestures */
   }
   #container {
     position: relative;
@@ -54,6 +55,7 @@
     font-size: 1rem;
     pointer-events: none;
   }
+  /* pulse jump animation (smaller & less intense) */
   @keyframes pulseOutwardBounce {
     0% {
       transform: translateZ(0) scale(1);
@@ -89,9 +91,26 @@
     z-index: 9999;
     will-change: transform, opacity;
   }
+  /* New: intro text styling */
+  #intro-text {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Chiron Sung HK', serif;
+    font-size: 1.75rem;
+    color: black;
+    pointer-events: none;
+    user-select: none;
+    opacity: 1;
+    will-change: transform, filter, opacity;
+  }
 </style>
 </head>
 <body>
+  <!-- New: intro text -->
+  <div id="intro-text">test</div>
+
   <div id="container">
     <div id="input" contenteditable="true" spellcheck="false" autocorrect="off" autocomplete="off" autocapitalize="off"></div>
     <div id="counter">50</div>
@@ -100,10 +119,29 @@
 <script>
   const input = document.getElementById('input');
   const counter = document.getElementById('counter');
+  const introText = document.getElementById('intro-text');
   const MAX_CHARS = 50;
   let pulseTimeout = null;
   let afkTimeout = null;
   let maxCharTimeout = null;
+
+  // intro text pulse and fade out sequence
+  function introPulseAndFade() {
+    introText.classList.add('pulse-jump');
+
+    // after pulse animation (600ms) keep visible until 2s total
+    setTimeout(() => {
+      // fade out over 2 seconds
+      introText.style.transition = 'opacity 2s ease';
+      introText.style.opacity = '0';
+    }, 1400); // 600ms pulse + 800ms wait = 1.4s before fade
+
+    // remove from DOM after fade out
+    setTimeout(() => {
+      introText.remove();
+      input.focus();
+    }, 3400); // 1.4s + 2s fade
+  }
 
   function updateCounter() {
     let text = input.textContent;
@@ -203,7 +241,7 @@
     if(currentLength >= MAX_CHARS) {
       maxCharTimeout = setTimeout(() => {
         triggerPulseThenDissolve();
-      }, 1000); // 1 second delay now
+      }, 1000);
     } else if(currentLength > 0) {
       afkTimeout = setTimeout(() => {
         triggerPulseThenDissolve();
@@ -225,6 +263,11 @@
   });
 
   updateCounter();
+
+  // run intro animation on load
+  window.onload = () => {
+    introPulseAndFade();
+  };
 </script>
 </body>
 </html>
