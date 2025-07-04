@@ -5,7 +5,7 @@
   <title>text ghost</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Font: Chiron Sung HK -->
+  <!-- Font -->
   <link href="https://cdn.jsdelivr.net/gh/luxemberg/fonts/chiron-sung-hk/ChironSungHK-Regular.otf" rel="stylesheet" />
 
   <style>
@@ -30,7 +30,6 @@
       justify-content: center;
       align-items: center;
       overflow: hidden;
-      position: relative;
     }
 
     #container {
@@ -47,10 +46,7 @@
       border: none;
       outline: none;
       font-size: 2.0rem;
-      text-align: left;
       line-height: 1.4;
-      user-select: text;
-      cursor: text;
       color: black;
       width: 100%;
       height: 100%;
@@ -58,10 +54,9 @@
       column-count: 5;
       column-gap: 1em;
       white-space: normal;
-      overflow-wrap: break-word;
       word-break: break-word;
       position: relative;
-      z-index: 2;
+      overflow: hidden;
     }
 
     .fade-in {
@@ -73,16 +68,12 @@
     @keyframes fadeInChar {
       from {
         opacity: 0;
-        transform: scale(0.92);
+        transform: scale(0.96);
       }
       to {
         opacity: 1;
         transform: scale(1);
       }
-    }
-
-    #clone {
-      display: none;
     }
 
     .fade-piece {
@@ -104,39 +95,25 @@
 <body>
   <div id="container">
     <div id="input" contenteditable="true" spellcheck="false" autofocus></div>
-    <div id="clone"></div>
   </div>
 
   <script>
     const input = document.getElementById("input");
-    const clone = document.getElementById("clone");
+    let lastValidText = '';
     let timeout = null;
-    let lastValidText = "";
 
     function countWords(text) {
       return text.trim().split(/\s+/).filter(Boolean).length;
     }
 
-    function buildCloneSpans(text) {
-      clone.innerHTML = '';
-      [...text].forEach(char => {
-        const span = document.createElement('span');
-        span.textContent = char;
-        clone.appendChild(span);
-      });
-    }
-
-    function dissolveText(text) {
-      if (!text.trim()) return;
-
-      buildCloneSpans(text);
-      const spans = [...clone.children];
-
-      spans.forEach(span => {
-        const rect = span.getBoundingClientRect();
+    function dissolveText() {
+      const letters = Array.from(input.childNodes);
+      letters.forEach(node => {
+        if (node.nodeType !== 1) return;
+        const rect = node.getBoundingClientRect();
         const piece = document.createElement('span');
         piece.className = 'fade-piece';
-        piece.textContent = span.textContent;
+        piece.textContent = node.textContent;
         piece.style.left = `${rect.left}px`;
         piece.style.top = `${rect.top}px`;
         document.body.appendChild(piece);
@@ -154,39 +131,45 @@
       });
 
       input.innerHTML = '';
-      lastValidText = '';
-      input.focus();
     }
 
     input.addEventListener("keydown", (e) => {
       const plainText = input.innerText.toLowerCase();
-      const charCount = plainText.replace(/\n/g, '').length;
+      const charCount = plainText.length;
       const wordCount = countWords(plainText);
-      const allowed = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"];
 
+      const allowed = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"];
       if (charCount >= 25 && !allowed.includes(e.key)) {
         e.preventDefault();
       }
     });
 
-    input.addEventListener("input", () => {
-      let rawText = input.innerText.replace(/\n/g, " ").toLowerCase();
+    input.addEventListener("input", (e) => {
+      const raw = input.innerText.replace(/\n/g, ' ').toLowerCase();
+      const words = raw.trim().split(/\s+/).filter(Boolean).slice(0, 5);
+      const limited = words.join(" ").slice(0, 25);
 
-      // Enforce limits
-      let words = rawText.trim().split(/\s+/).filter(Boolean).slice(0, 5);
-      let limitedText = words.join(" ").slice(0, 25);
+      const prev = lastValidText;
+      lastValidText = limited;
+
+      // Identify the newly added character
+      let newChar = '';
+      if (limited.length > prev.length) {
+        newChar = limited.slice(-1);
+      }
 
       input.innerHTML = '';
 
-      for (let char of limitedText) {
+      for (let i = 0; i < limited.length; i++) {
         const span = document.createElement('span');
-        span.className = 'fade-in';
-        span.textContent = char;
+        span.textContent = limited[i];
+        if (limited[i] === newChar) {
+          span.classList.add('fade-in');
+        }
         input.appendChild(span);
       }
 
-      lastValidText = limitedText;
-
+      // Move cursor to end
       const range = document.createRange();
       const sel = window.getSelection();
       range.selectNodeContents(input);
@@ -195,7 +178,7 @@
       sel.addRange(range);
 
       clearTimeout(timeout);
-      timeout = setTimeout(() => dissolveText(lastValidText), 2000);
+      timeout = setTimeout(() => dissolveText(), 2000);
     });
   </script>
 </body>
