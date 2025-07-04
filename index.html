@@ -5,7 +5,6 @@
   <title>text ghost</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Font -->
   <link href="https://cdn.jsdelivr.net/gh/luxemberg/fonts/chiron-sung-hk/ChironSungHK-Regular.otf" rel="stylesheet" />
 
   <style>
@@ -53,10 +52,9 @@
       column-width: 150px;
       column-count: 5;
       column-gap: 1em;
-      white-space: normal;
       word-break: break-word;
+      overflow-wrap: break-word;
       position: relative;
-      overflow: hidden;
     }
 
     .fade-in {
@@ -68,7 +66,7 @@
     @keyframes fadeInChar {
       from {
         opacity: 0;
-        transform: scale(0.96);
+        transform: scale(0.95);
       }
       to {
         opacity: 1;
@@ -94,12 +92,12 @@
 </head>
 <body>
   <div id="container">
-    <div id="input" contenteditable="true" spellcheck="false" autofocus></div>
+    <div id="input" contenteditable="false" spellcheck="false" autofocus></div>
   </div>
 
   <script>
     const input = document.getElementById("input");
-    let lastValidText = '';
+    let content = '';
     let timeout = null;
 
     function countWords(text) {
@@ -107,13 +105,12 @@
     }
 
     function dissolveText() {
-      const letters = Array.from(input.childNodes);
-      letters.forEach(node => {
-        if (node.nodeType !== 1) return;
-        const rect = node.getBoundingClientRect();
+      const spans = input.querySelectorAll('span');
+      spans.forEach(span => {
+        const rect = span.getBoundingClientRect();
         const piece = document.createElement('span');
         piece.className = 'fade-piece';
-        piece.textContent = node.textContent;
+        piece.textContent = span.textContent;
         piece.style.left = `${rect.left}px`;
         piece.style.top = `${rect.top}px`;
         document.body.appendChild(piece);
@@ -131,54 +128,48 @@
       });
 
       input.innerHTML = '';
+      content = '';
     }
 
-    input.addEventListener("keydown", (e) => {
-      const plainText = input.innerText.toLowerCase();
-      const charCount = plainText.length;
-      const wordCount = countWords(plainText);
+    document.addEventListener('keydown', (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
 
-      const allowed = ["Backspace", "Delete", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"];
-      if (charCount >= 25 && !allowed.includes(e.key)) {
+      const key = e.key.toLowerCase();
+
+      if (key === "enter") {
         e.preventDefault();
-      }
-    });
-
-    input.addEventListener("input", (e) => {
-      const raw = input.innerText.replace(/\n/g, ' ').toLowerCase();
-      const words = raw.trim().split(/\s+/).filter(Boolean).slice(0, 5);
-      const limited = words.join(" ").slice(0, 25);
-
-      const prev = lastValidText;
-      lastValidText = limited;
-
-      // Identify the newly added character
-      let newChar = '';
-      if (limited.length > prev.length) {
-        newChar = limited.slice(-1);
+        return;
       }
 
-      input.innerHTML = '';
+      // handle backspace
+      if (key === "backspace") {
+        e.preventDefault();
+        content = content.slice(0, -1);
+        input.removeChild(input.lastChild);
+        return;
+      }
 
-      for (let i = 0; i < limited.length; i++) {
-        const span = document.createElement('span');
-        span.textContent = limited[i];
-        if (limited[i] === newChar) {
-          span.classList.add('fade-in');
+      // allow space and visible characters only
+      if (key.length === 1) {
+        const next = content + key;
+        const wordCount = countWords(next);
+        if (wordCount > 5 || next.length > 50) {
+          e.preventDefault();
+          return;
         }
+
+        e.preventDefault();
+
+        content += key;
+        const span = document.createElement('span');
+        span.textContent = key;
+        span.className = 'fade-in';
         input.appendChild(span);
+
+        // reset fade timer
+        clearTimeout(timeout);
+        timeout = setTimeout(() => dissolveText(), 2000);
       }
-
-      // Move cursor to end
-      const range = document.createRange();
-      const sel = window.getSelection();
-      range.selectNodeContents(input);
-      range.collapse(false);
-      sel.removeAllRanges();
-      sel.addRange(range);
-
-      clearTimeout(timeout);
-      timeout = setTimeout(() => dissolveText(), 2000);
     });
   </script>
 </body>
