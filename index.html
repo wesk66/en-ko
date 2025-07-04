@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>text ghost with outward bounce + blur + spaces</title>
+  <title>text ghost outward bounce fixed + spaces</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://cdn.jsdelivr.net/gh/luxemberg/fonts/chiron-sung-hk/ChironSungHK-Regular.otf" rel="stylesheet" />
 
@@ -102,22 +102,22 @@
       pointer-events: none;
     }
 
-    /* outward bounce with blur */
+    /* outward bounce going up + scale + blur */
     @keyframes pulseOutwardBounce {
       0% {
-        transform: translateZ(0) scale(1);
+        transform: translateY(0) scale(1);
         filter: blur(0);
       }
       40% {
-        transform: translateZ(20px) scale(1.15);
+        transform: translateY(-20px) scale(1.15);
         filter: blur(1.5px);
       }
       70% {
-        transform: translateZ(8px) scale(1.05);
+        transform: translateY(-8px) scale(1.05);
         filter: blur(0.5px);
       }
       100% {
-        transform: translateZ(0) scale(1);
+        transform: translateY(0) scale(1);
         filter: blur(0);
       }
     }
@@ -220,9 +220,31 @@
           return;
         }
 
+        // Fix: allow space properly
+        if (key === " ") {
+          e.preventDefault();
+          // Append space only if total length < 50
+          if (content.length < 50) {
+            content += " ";
+            const span = document.createElement('span');
+            span.textContent = " ";
+            span.className = 'fade-in';
+            input.appendChild(span);
+            updateCounter();
+
+            resetTimers();
+
+            if (content.length === 50) {
+              pulseTimeout = setTimeout(() => triggerPulseThenDissolve(), 2000);
+            } else {
+              afkTimeout = setTimeout(() => triggerPulseThenDissolve(), 10000);
+            }
+          }
+          return;
+        }
+
         e.preventDefault();
 
-        // Fix: allow space normally
         const lowerKey = key.toLowerCase();
         content += lowerKey;
 
