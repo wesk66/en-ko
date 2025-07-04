@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>text ghost outward bounce fixed + spaces</title>
+  <title>text ghost bigger typing area same limit</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://cdn.jsdelivr.net/gh/luxemberg/fonts/chiron-sung-hk/ChironSungHK-Regular.otf" rel="stylesheet" />
 
@@ -32,11 +32,13 @@
 
     #container {
       position: relative;
-      width: 320px;
+      width: 420px;  /* bigger visible area */
       height: 200px;
-      padding: 10px 15px;
+      padding: 15px 20px;
       display: flex;
       align-items: flex-start;
+      border: 1px solid transparent; /* invisible but ensures box size */
+      user-select: none;
     }
 
     #input {
@@ -57,6 +59,8 @@
       max-width: 100%;
       overflow-y: auto;
       will-change: transform, filter;
+      resize: none;
+      overflow-x: hidden;
     }
 
     .fade-in {
@@ -139,7 +143,6 @@
     const input = document.getElementById("input");
     const counter = document.getElementById("counter");
     let content = '';
-    let timeout = null;
     let pulseTimeout = null;
     let afkTimeout = null;
 
@@ -183,7 +186,6 @@
     }
 
     function resetTimers() {
-      clearTimeout(timeout);
       clearTimeout(pulseTimeout);
       clearTimeout(afkTimeout);
     }
@@ -220,10 +222,9 @@
           return;
         }
 
-        // Fix: allow space properly
+        // allow space normally
         if (key === " ") {
           e.preventDefault();
-          // Append space only if total length < 50
           if (content.length < 50) {
             content += " ";
             const span = document.createElement('span');
