@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <title>text ghost</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
   <link href="https://cdn.jsdelivr.net/gh/luxemberg/fonts/chiron-sung-hk/ChironSungHK-Regular.otf" rel="stylesheet" />
 
   <style>
@@ -35,7 +34,6 @@
       width: 320px;
       height: 200px;
       padding: 10px 15px;
-      overflow: hidden;
       display: flex;
       align-items: flex-start;
     }
@@ -46,7 +44,6 @@
       outline: none;
       font-size: 2.0rem;
       line-height: 1.4;
-      color: black;
       width: 100%;
       height: 100%;
       column-width: 150px;
@@ -55,6 +52,7 @@
       word-break: break-word;
       overflow-wrap: break-word;
       position: relative;
+      white-space: pre-wrap;
     }
 
     .fade-in {
@@ -82,7 +80,6 @@
       transition: transform 1s ease, opacity 1.5s ease;
       white-space: pre;
       font-family: 'Chiron Sung HK', 'Noto Sans KR', serif;
-      text-transform: lowercase;
       color: black;
       user-select: none;
       z-index: 9999;
@@ -92,17 +89,13 @@
 </head>
 <body>
   <div id="container">
-    <div id="input" contenteditable="false" spellcheck="false" autofocus></div>
+    <div id="input" contenteditable="true" spellcheck="false" autofocus></div>
   </div>
 
   <script>
     const input = document.getElementById("input");
     let content = '';
     let timeout = null;
-
-    function countWords(text) {
-      return text.trim().split(/\s+/).filter(Boolean).length;
-    }
 
     function dissolveText() {
       const spans = input.querySelectorAll('span');
@@ -134,39 +127,35 @@
     document.addEventListener('keydown', (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
 
-      const key = e.key.toLowerCase();
+      const key = e.key;
 
-      if (key === "enter") {
+      if (key === "Enter") {
         e.preventDefault();
         return;
       }
 
-      // handle backspace
-      if (key === "backspace") {
+      if (key === "Backspace") {
         e.preventDefault();
         content = content.slice(0, -1);
-        input.removeChild(input.lastChild);
+        if (input.lastChild) input.removeChild(input.lastChild);
         return;
       }
 
-      // allow space and visible characters only
       if (key.length === 1) {
-        const next = content + key;
-        const wordCount = countWords(next);
-        if (wordCount > 5 || next.length > 50) {
+        if (content.length >= 50) {
           e.preventDefault();
           return;
         }
 
         e.preventDefault();
+        const lowerKey = key.toLowerCase();
+        content += lowerKey;
 
-        content += key;
         const span = document.createElement('span');
-        span.textContent = key;
+        span.textContent = lowerKey;
         span.className = 'fade-in';
         input.appendChild(span);
 
-        // reset fade timer
         clearTimeout(timeout);
         timeout = setTimeout(() => dissolveText(), 2000);
       }
