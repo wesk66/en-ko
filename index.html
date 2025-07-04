@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>text dissolve with spaces and pulse</title>
+<title>text dissolve with spaces allowed and max length</title>
 <style>
   @font-face {
     font-family: 'Chiron Sung HK';
@@ -12,7 +12,6 @@
   * {
     margin: 0; padding: 0; box-sizing: border-box;
     font-family: 'Chiron Sung HK', 'Noto Sans KR', serif;
-    text-transform: lowercase;
     background: white;
     color: black;
   }
@@ -55,27 +54,27 @@
     font-size: 1rem;
     pointer-events: none;
   }
-  .pulse-jump {
-    animation: pulseOutwardBounce 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
-    will-change: transform, filter;
-  }
   @keyframes pulseOutwardBounce {
     0% {
-      transform: translateY(0) scale(1);
+      transform: translateZ(0) scale(1);
       filter: blur(0);
     }
     40% {
-      transform: translateY(-20px) scale(1.15);
+      transform: translateZ(30px) scale(1.15);
       filter: blur(1.5px);
     }
     70% {
-      transform: translateY(-8px) scale(1.05);
+      transform: translateZ(15px) scale(1.05);
       filter: blur(0.5px);
     }
     100% {
-      transform: translateY(0) scale(1);
+      transform: translateZ(0) scale(1);
       filter: blur(0);
     }
+  }
+  .pulse-jump {
+    animation: pulseOutwardBounce 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+    will-change: transform, filter;
   }
   .fade-piece {
     position: fixed;
@@ -98,93 +97,125 @@
     <div id="counter">50</div>
   </div>
 
-  <script>
-    const input = document.getElementById('input');
-    const counter = document.getElementById('counter');
-    let pulseTimeout = null;
-    let afkTimeout = null;
-    const MAX_CHARS = 50;
+<script>
+  const input = document.getElementById('input');
+  const counter = document.getElementById('counter');
+  const MAX_CHARS = 50;
+  let pulseTimeout = null;
+  let afkTimeout = null;
 
-    function updateCounter() {
-      const text = input.textContent.toLowerCase();
-      if(text.length > MAX_CHARS) {
-        input.textContent = text.slice(0, MAX_CHARS);
+  function updateCounter() {
+    let text = input.textContent;
+    if(text.length > MAX_CHARS) {
+      text = text.slice(0, MAX_CHARS);
+      input.textContent = text;
+      placeCaretAtEnd(input);
+    }
+    counter.textContent = MAX_CHARS - text.length;
+  }
+
+  function placeCaretAtEnd(el) {
+    el.focus();
+    if(typeof window.getSelection != "undefined" && typeof document.createRange != "undefined") {
+      let range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      let sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  }
+
+  function toLowercasePreserveCaret(el) {
+    const sel = window.getSelection();
+    if(!sel.rangeCount) return;
+    const range = sel.getRangeAt(0);
+    const startOffset = range.startOffset;
+    const startContainer = range.startContainer;
+
+    el.textContent = el.textContent.toLowerCase();
+
+    // Reset caret
+    placeCaretAtEnd(el);
+
+    // Try restore caret at approx previous position if possible
+    // Note: This is a best effort; complex contenteditable caret restoring can be tricky
+  }
+
+  function dissolveText() {
+    input.classList.remove('pulse-jump');
+
+    const rect = input.getBoundingClientRect();
+    const text = input.textContent;
+
+    for(let i=0; i < text.length; i++) {
+      const char = text[i];
+      if(char === ' ') continue;
+
+      const piece = document.createElement('span');
+      piece.className = 'fade-piece';
+      piece.textContent = char;
+
+      const range = document.createRange();
+      const childNode = input.firstChild;
+      if(childNode) {
+        range.setStart(childNode, i);
+        range.setEnd(childNode, i + 1);
+        const charRect = range.getBoundingClientRect();
+
+        piece.style.left = `${charRect.left}px`;
+        piece.style.top = `${charRect.top}px`;
+      } else {
+        piece.style.left = `${rect.left + rect.width/2}px`;
+        piece.style.top = `${rect.top + rect.height/2}px`;
       }
-      counter.textContent = MAX_CHARS - input.textContent.length;
+
+      document.body.appendChild(piece);
+
+      const offsetX = (Math.random() - 0.5) * 300;
+      const offsetY = (Math.random() - 0.5) * 300;
+      const angle = (Math.random() - 0.5) * 720;
+
+      requestAnimationFrame(() => {
+        piece.style.transform = `translate(${offsetX}px, ${offsetY}px) rotate(${angle}deg)`;
+        piece.style.opacity = 0;
+      });
+
+      setTimeout(() => piece.remove(), 1800);
     }
 
-    function dissolveText() {
-      input.classList.remove('pulse-jump');
-
-      const rect = input.getBoundingClientRect();
-      const text = input.textContent;
-
-      // Create pieces per character for dissolve effect
-      for(let i=0; i < text.length; i++) {
-        const char = text[i];
-        if(char === ' ') continue; // skip spaces for pieces
-
-        const piece = document.createElement('span');
-        piece.className = 'fade-piece';
-        piece.textContent = char;
-
-        // Approximate character position by splitting input content
-        const range = document.createRange();
-        const childNode = input.firstChild;
-        if(childNode) {
-          range.setStart(childNode, i);
-          range.setEnd(childNode, i + 1);
-          const charRect = range.getBoundingClientRect();
-
-          piece.style.left = `${charRect.left}px`;
-          piece.style.top = `${charRect.top}px`;
-        } else {
-          // fallback center
-          piece.style.left = `${rect.left + rect.width/2}px`;
-          piece.style.top = `${rect.top + rect.height/2}px`;
-        }
-
-        document.body.appendChild(piece);
-
-        const offsetX = (Math.random() - 0.5) * 300;
-        const offsetY = (Math.random() - 0.5) * 300;
-        const angle = (Math.random() - 0.5) * 720;
-
-        requestAnimationFrame(() => {
-          piece.style.transform = `translate(${offsetX}px, ${offsetY}px) rotate(${angle}deg)`;
-          piece.style.opacity = 0;
-        });
-
-        setTimeout(() => piece.remove(), 1800);
-      }
-
-      input.textContent = '';
-      updateCounter();
-    }
-
-    function triggerPulseThenDissolve() {
-      input.classList.add('pulse-jump');
-      pulseTimeout = setTimeout(() => dissolveText(), 600);
-    }
-
-    function resetTimers() {
-      clearTimeout(pulseTimeout);
-      clearTimeout(afkTimeout);
-      if(input.textContent.length > 0) {
-        afkTimeout = setTimeout(() => triggerPulseThenDissolve(), 10000);
-      }
-    }
-
-    input.addEventListener('input', e => {
-      input.textContent = input.textContent.toLowerCase();
-      if(input.textContent.length > MAX_CHARS) {
-        input.textContent = input.textContent.slice(0, MAX_CHARS);
-      }
-      updateCounter();
-      resetTimers();
-    });
-
+    input.textContent = '';
     updateCounter();
-  </script>
+  }
+
+  function triggerPulseThenDissolve() {
+    input.classList.add('pulse-jump');
+    pulseTimeout = setTimeout(() => dissolveText(), 600);
+  }
+
+  function resetTimers() {
+    clearTimeout(pulseTimeout);
+    clearTimeout(afkTimeout);
+    if(input.textContent.length > 0) {
+      afkTimeout = setTimeout(() => triggerPulseThenDissolve(), 10000);
+    }
+  }
+
+  // Block input if over max chars
+  input.addEventListener('beforeinput', e => {
+    const text = input.textContent;
+    if(text.length >= MAX_CHARS && e.inputType !== 'deleteContentBackward') {
+      e.preventDefault();
+    }
+  });
+
+  input.addEventListener('input', e => {
+    toLowercasePreserveCaret(input);
+    updateCounter();
+    resetTimers();
+  });
+
+  updateCounter();
+</script>
 </body>
 </html>
