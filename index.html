@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>text ghost improved</title>
+  <title>text ghost with AFK explode & bounce</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://cdn.jsdelivr.net/gh/luxemberg/fonts/chiron-sung-hk/ChironSungHK-Regular.otf" rel="stylesheet" />
 
@@ -47,7 +47,6 @@
       line-height: 1.4;
       width: 100%;
       height: 100%;
-      /* remove columns, use natural wrapping */
       word-break: normal;
       overflow-wrap: break-word;
       position: relative;
@@ -102,17 +101,27 @@
       pointer-events: none;
     }
 
+    /* stronger bouncy pulse jump */
     @keyframes pulseZJump {
-      0%, 100% {
+      0% {
         transform: translateZ(0) scale(1);
       }
+      30% {
+        transform: translateZ(20px) scale(1.15);
+      }
       50% {
-        transform: translateZ(12px) scale(1.05);
+        transform: translateZ(8px) scale(1.05);
+      }
+      70% {
+        transform: translateZ(15px) scale(1.1);
+      }
+      100% {
+        transform: translateZ(0) scale(1);
       }
     }
 
     .pulse-jump {
-      animation: pulseZJump 0.4s ease forwards;
+      animation: pulseZJump 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
       transform-style: preserve-3d;
       will-change: transform;
     }
@@ -130,6 +139,7 @@
     let content = '';
     let timeout = null;
     let pulseTimeout = null;
+    let afkTimeout = null;
 
     function updateCounter() {
       counter.textContent = 50 - content.length;
@@ -167,7 +177,13 @@
 
     function triggerPulseThenDissolve() {
       input.classList.add('pulse-jump');
-      pulseTimeout = setTimeout(() => dissolveText(), 400);
+      pulseTimeout = setTimeout(() => dissolveText(), 600);
+    }
+
+    function resetTimers() {
+      clearTimeout(timeout);
+      clearTimeout(pulseTimeout);
+      clearTimeout(afkTimeout);
     }
 
     document.addEventListener('keydown', (e) => {
@@ -185,14 +201,13 @@
         content = content.slice(0, -1);
         if (input.lastChild) input.removeChild(input.lastChild);
         updateCounter();
-        clearTimeout(timeout);
-        clearTimeout(pulseTimeout);
 
-        // No explode if under max length
+        resetTimers();
+
         if (content.length === 50) {
           pulseTimeout = setTimeout(() => triggerPulseThenDissolve(), 2000);
-        } else {
-          timeout = setTimeout(() => {}, 2000); // no dissolve on under limit
+        } else if (content.length > 0) {
+          afkTimeout = setTimeout(() => triggerPulseThenDissolve(), 10000);
         }
         return;
       }
@@ -204,6 +219,7 @@
         }
 
         e.preventDefault();
+
         const lowerKey = key.toLowerCase();
         content += lowerKey;
 
@@ -214,14 +230,12 @@
 
         updateCounter();
 
-        clearTimeout(timeout);
-        clearTimeout(pulseTimeout);
+        resetTimers();
 
         if (content.length === 50) {
           pulseTimeout = setTimeout(() => triggerPulseThenDissolve(), 2000);
         } else {
-          // no dissolve on under max length
-          timeout = setTimeout(() => {}, 2000);
+          afkTimeout = setTimeout(() => triggerPulseThenDissolve(), 10000);
         }
       }
     });
