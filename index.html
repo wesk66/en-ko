@@ -214,4 +214,63 @@
         const angle = (Math.random() - 0.5) * 720;
 
         requestAnimationFrame(() => {
-          piece.style.tran
+          piece.style.transform = `translate(${offsetX}px, ${offsetY}px) rotate(${angle}deg)`;
+          piece.style.opacity = 0;
+        });
+
+        setTimeout(() => piece.remove(), 1800);
+      }
+
+      input.textContent = '';
+      updateCounter();
+    }
+
+    function triggerPulseThenDissolve() {
+      if (input.textContent.length === 0) return;
+
+      input.classList.add('pulse-jump');
+
+      setTimeout(() => {
+        dissolveText();
+      }, 600);
+    }
+
+    function resetTimers() {
+      clearTimeout(pulseTimeout);
+      clearTimeout(afkTimeout);
+      clearTimeout(maxCharTimeout);
+
+      const currentLength = input.textContent.length;
+
+      if (currentLength >= MAX_CHARS) {
+        maxCharTimeout = setTimeout(() => {
+          triggerPulseThenDissolve();
+        }, 1000);
+      } else if (currentLength > 0) {
+        afkTimeout = setTimeout(() => {
+          triggerPulseThenDissolve();
+        }, 10000);
+      }
+    }
+
+    input.addEventListener('beforeinput', e => {
+      const text = input.textContent;
+      if (text.length >= MAX_CHARS && e.inputType !== 'deleteContentBackward') {
+        e.preventDefault();
+      }
+    });
+
+    input.addEventListener('input', e => {
+      updateCounter();
+      resetTimers();
+    });
+
+    updateCounter();
+
+    window.onload = () => {
+      introPulseAndFade();
+    };
+  </script>
+
+</body>
+</html>
