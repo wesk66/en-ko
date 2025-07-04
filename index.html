@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>text dissolve with spaces allowed and max length</title>
+<title>text dissolve with jump and explode</title>
 <style>
   @font-face {
     font-family: 'Chiron Sung HK';
@@ -135,11 +135,7 @@
 
     el.textContent = el.textContent.toLowerCase();
 
-    // Reset caret
     placeCaretAtEnd(el);
-
-    // Try restore caret at approx previous position if possible
-    // Note: This is a best effort; complex contenteditable caret restoring can be tricky
   }
 
   function dissolveText() {
@@ -189,19 +185,31 @@
   }
 
   function triggerPulseThenDissolve() {
+    if(input.textContent.length === 0) return; // don't pulse empty
+
     input.classList.add('pulse-jump');
-    pulseTimeout = setTimeout(() => dissolveText(), 600);
+
+    // Wait for pulse animation end (600ms) then dissolve
+    setTimeout(() => {
+      dissolveText();
+    }, 600);
   }
 
   function resetTimers() {
     clearTimeout(pulseTimeout);
     clearTimeout(afkTimeout);
-    if(input.textContent.length > 0) {
-      afkTimeout = setTimeout(() => triggerPulseThenDissolve(), 10000);
+
+    if(input.textContent.length >= MAX_CHARS) {
+      // Pulse & explode immediately on max chars
+      triggerPulseThenDissolve();
+    } else if(input.textContent.length > 0) {
+      // Reset AFK timer to pulse & explode after 10s idle
+      afkTimeout = setTimeout(() => {
+        triggerPulseThenDissolve();
+      }, 10000);
     }
   }
 
-  // Block input if over max chars
   input.addEventListener('beforeinput', e => {
     const text = input.textContent;
     if(text.length >= MAX_CHARS && e.inputType !== 'deleteContentBackward') {
