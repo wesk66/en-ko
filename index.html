@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>text dissolve delayed explode at max chars</title>
+<title>text dissolve smaller pulse, 1s delay</title>
 <style>
   @font-face {
     font-family: 'Chiron Sung HK';
@@ -60,12 +60,12 @@
       filter: blur(0);
     }
     40% {
-      transform: translateZ(30px) scale(1.15);
-      filter: blur(1.5px);
+      transform: translateZ(15px) scale(1.08);
+      filter: blur(1px);
     }
     70% {
-      transform: translateZ(15px) scale(1.05);
-      filter: blur(0.5px);
+      transform: translateZ(8px) scale(1.03);
+      filter: blur(0.3px);
     }
     100% {
       transform: translateZ(0) scale(1);
@@ -103,7 +103,7 @@
   const MAX_CHARS = 50;
   let pulseTimeout = null;
   let afkTimeout = null;
-  let maxCharTimeout = null; // new timer for 1.5s delay at max chars
+  let maxCharTimeout = null;
 
   function updateCounter() {
     let text = input.textContent;
@@ -132,14 +132,8 @@
     if(!sel.rangeCount) return;
     const range = sel.getRangeAt(0);
 
-    // Save caret position data
-    let startOffset = range.startOffset;
-    let startContainer = range.startContainer;
-
-    // Lowercase entire text content
     el.textContent = el.textContent.toLowerCase();
 
-    // Restore caret position carefully
     placeCaretAtEnd(el);
   }
 
@@ -190,7 +184,7 @@
   }
 
   function triggerPulseThenDissolve() {
-    if(input.textContent.length === 0) return; // don't pulse empty
+    if(input.textContent.length === 0) return;
 
     input.classList.add('pulse-jump');
 
@@ -207,10 +201,9 @@
     const currentLength = input.textContent.length;
 
     if(currentLength >= MAX_CHARS) {
-      // wait 1.5 seconds before exploding
       maxCharTimeout = setTimeout(() => {
         triggerPulseThenDissolve();
-      }, 1500);
+      }, 1000); // 1 second delay now
     } else if(currentLength > 0) {
       afkTimeout = setTimeout(() => {
         triggerPulseThenDissolve();
