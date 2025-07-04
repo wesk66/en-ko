@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>text dissolve with intro and no zoom</title>
+<title>en-ko</title>
 <style>
   @font-face {
     font-family: 'Chiron Sung HK';
@@ -17,11 +17,13 @@
   }
   html, body {
     height: 100%;
+    margin: 0;
     display: flex;
     justify-content: center;
     align-items: center;
     overflow: hidden;
-    touch-action: manipulation; /* help block zoom gestures */
+    touch-action: manipulation; /* blocks zoom gestures */
+    position: relative;
   }
   #container {
     position: relative;
@@ -91,9 +93,9 @@
     z-index: 9999;
     will-change: transform, opacity;
   }
-  /* intro text styling */
+  /* intro text styling - changed to absolute for mobile center fix */
   #intro-text {
-    position: fixed;
+    position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) scale(1);
@@ -113,7 +115,7 @@
 </head>
 <body>
   <!-- intro text popup -->
-  <div id="intro-text">test</div>
+  <div id="intro-text">this is a test</div>
 
   <div id="container">
     <div id="input" contenteditable="true" spellcheck="false" autocorrect="off" autocomplete="off" autocapitalize="off"></div>
@@ -133,17 +135,15 @@
   function introPulseAndFade() {
     introText.classList.add('pulse-jump');
 
-    // after pulse animation (600ms) + 1400ms total visible, start fade out
     setTimeout(() => {
       introText.style.transition = 'opacity 2s ease';
       introText.style.opacity = '0';
-    }, 2000); // hold 2 seconds before fade
+    }, 2000);
 
-    // remove from DOM after fade out
     setTimeout(() => {
       introText.remove();
       input.focus();
-    }, 4000); // 2s fade after hold
+    }, 4000);
   }
 
   function updateCounter() {
