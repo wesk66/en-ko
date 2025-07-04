@@ -3,59 +3,33 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-<title>text dissolve with start popup and no zoom</title>
+<title>intro test visible fix</title>
 <style>
   @font-face {
     font-family: 'Chiron Sung HK';
     src: url('https://cdn.jsdelivr.net/gh/luxemberg/fonts/chiron-sung-hk/ChironSungHK-Regular.otf') format('opentype');
   }
-  * {
-    margin: 0; padding: 0; box-sizing: border-box;
-    font-family: 'Chiron Sung HK', 'Noto Sans KR', serif;
-    background: white;
-    color: black;
-  }
-  html, body {
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    touch-action: manipulation; /* help block zoom gestures */
-  }
-  #container {
-    position: relative;
-    width: 500px;
-    min-height: 140px;
-    padding: 20px 25px;
-    user-select: none;
-    overflow: visible;
-  }
-  #input {
-    background: transparent;
-    border: none;
-    outline: none;
-    font-size: 1.75rem;
-    line-height: 1.4;
-    width: 100%;
-    min-height: 120px;
-    max-height: 140px;
-    white-space: normal;
-    overflow-wrap: break-word;
-    user-select: text;
-    caret-color: black;
-    resize: none;
-  }
-  #counter {
-    position: absolute;
-    right: 10px;
-    top: 10px;
+  body {
+    margin: 0;
     font-family: 'Chiron Sung HK', serif;
-    color: #666;
-    font-size: 1rem;
-    pointer-events: none;
+    background: white;
   }
-  /* pulse jump animation (smaller & less intense) */
+  #intro-text {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1);
+    font-size: 1.75rem;
+    color: black;
+    pointer-events: none;
+    user-select: none;
+    opacity: 1;
+    z-index: 10000;
+    background: white;
+    padding: 5px 12px;
+    border-radius: 5px;
+    will-change: transform, filter, opacity;
+  }
   @keyframes pulseOutwardBounce {
     0% {
       transform: translateZ(0) scale(1);
@@ -78,193 +52,24 @@
     animation: pulseOutwardBounce 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
     will-change: transform, filter;
   }
-  .fade-piece {
-    position: fixed;
-    font-size: 1.75rem;
-    pointer-events: none;
-    opacity: 1;
-    transition: transform 1s ease, opacity 1.5s ease;
-    white-space: pre;
-    font-family: 'Chiron Sung HK', 'Noto Sans KR', serif;
-    color: black;
-    user-select: none;
-    z-index: 9999;
-    will-change: transform, opacity;
-  }
-  /* New: intro text styling */
-  #intro-text {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-family: 'Chiron Sung HK', serif;
-    font-size: 1.75rem;
-    color: black;
-    pointer-events: none;
-    user-select: none;
-    opacity: 1;
-    will-change: transform, filter, opacity;
-  }
 </style>
 </head>
 <body>
-  <!-- New: intro text -->
   <div id="intro-text">test</div>
-
-  <div id="container">
-    <div id="input" contenteditable="true" spellcheck="false" autocorrect="off" autocomplete="off" autocapitalize="off"></div>
-    <div id="counter">50</div>
-  </div>
-
 <script>
-  const input = document.getElementById('input');
-  const counter = document.getElementById('counter');
   const introText = document.getElementById('intro-text');
-  const MAX_CHARS = 50;
-  let pulseTimeout = null;
-  let afkTimeout = null;
-  let maxCharTimeout = null;
 
-  // intro text pulse and fade out sequence
   function introPulseAndFade() {
     introText.classList.add('pulse-jump');
-
-    // after pulse animation (600ms) keep visible until 2s total
     setTimeout(() => {
-      // fade out over 2 seconds
       introText.style.transition = 'opacity 2s ease';
       introText.style.opacity = '0';
-    }, 1400); // 600ms pulse + 800ms wait = 1.4s before fade
-
-    // remove from DOM after fade out
+    }, 2000);
     setTimeout(() => {
       introText.remove();
-      input.focus();
-    }, 3400); // 1.4s + 2s fade
+    }, 4000);
   }
 
-  function updateCounter() {
-    let text = input.textContent;
-    if(text.length > MAX_CHARS) {
-      text = text.slice(0, MAX_CHARS);
-      input.textContent = text;
-      placeCaretAtEnd(input);
-    }
-    counter.textContent = MAX_CHARS - text.length;
-  }
-
-  function placeCaretAtEnd(el) {
-    el.focus();
-    if(typeof window.getSelection != "undefined" && typeof document.createRange != "undefined") {
-      let range = document.createRange();
-      range.selectNodeContents(el);
-      range.collapse(false);
-      let sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
-    }
-  }
-
-  function toLowercasePreserveCaret(el) {
-    const sel = window.getSelection();
-    if(!sel.rangeCount) return;
-    const range = sel.getRangeAt(0);
-
-    el.textContent = el.textContent.toLowerCase();
-
-    placeCaretAtEnd(el);
-  }
-
-  function dissolveText() {
-    input.classList.remove('pulse-jump');
-
-    const rect = input.getBoundingClientRect();
-    const text = input.textContent;
-
-    for(let i=0; i < text.length; i++) {
-      const char = text[i];
-      if(char === ' ') continue;
-
-      const piece = document.createElement('span');
-      piece.className = 'fade-piece';
-      piece.textContent = char;
-
-      const range = document.createRange();
-      const childNode = input.firstChild;
-      if(childNode) {
-        range.setStart(childNode, i);
-        range.setEnd(childNode, i + 1);
-        const charRect = range.getBoundingClientRect();
-
-        piece.style.left = `${charRect.left}px`;
-        piece.style.top = `${charRect.top}px`;
-      } else {
-        piece.style.left = `${rect.left + rect.width/2}px`;
-        piece.style.top = `${rect.top + rect.height/2}px`;
-      }
-
-      document.body.appendChild(piece);
-
-      const offsetX = (Math.random() - 0.5) * 300;
-      const offsetY = (Math.random() - 0.5) * 300;
-      const angle = (Math.random() - 0.5) * 720;
-
-      requestAnimationFrame(() => {
-        piece.style.transform = `translate(${offsetX}px, ${offsetY}px) rotate(${angle}deg)`;
-        piece.style.opacity = 0;
-      });
-
-      setTimeout(() => piece.remove(), 1800);
-    }
-
-    input.textContent = '';
-    updateCounter();
-  }
-
-  function triggerPulseThenDissolve() {
-    if(input.textContent.length === 0) return;
-
-    input.classList.add('pulse-jump');
-
-    setTimeout(() => {
-      dissolveText();
-    }, 600);
-  }
-
-  function resetTimers() {
-    clearTimeout(pulseTimeout);
-    clearTimeout(afkTimeout);
-    clearTimeout(maxCharTimeout);
-
-    const currentLength = input.textContent.length;
-
-    if(currentLength >= MAX_CHARS) {
-      maxCharTimeout = setTimeout(() => {
-        triggerPulseThenDissolve();
-      }, 1000);
-    } else if(currentLength > 0) {
-      afkTimeout = setTimeout(() => {
-        triggerPulseThenDissolve();
-      }, 10000);
-    }
-  }
-
-  input.addEventListener('beforeinput', e => {
-    const text = input.textContent;
-    if(text.length >= MAX_CHARS && e.inputType !== 'deleteContentBackward') {
-      e.preventDefault();
-    }
-  });
-
-  input.addEventListener('input', e => {
-    toLowercasePreserveCaret(input);
-    updateCounter();
-    resetTimers();
-  });
-
-  updateCounter();
-
-  // run intro animation on load
   window.onload = () => {
     introPulseAndFade();
   };
