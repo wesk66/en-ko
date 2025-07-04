@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>text ghost bigger typing area same limit</title>
+  <title>text ghost with spaces + outward jump fix</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://cdn.jsdelivr.net/gh/luxemberg/fonts/chiron-sung-hk/ChironSungHK-Regular.otf" rel="stylesheet" />
 
@@ -32,12 +32,13 @@
 
     #container {
       position: relative;
-      width: 420px;  /* bigger visible area */
+      width: 420px;
       height: 200px;
       padding: 15px 20px;
       display: flex;
       align-items: flex-start;
-      border: 1px solid transparent; /* invisible but ensures box size */
+      /* Allow overflow visible so jump isn't clipped */
+      overflow: visible;
       user-select: none;
     }
 
@@ -106,7 +107,7 @@
       pointer-events: none;
     }
 
-    /* outward bounce going up + scale + blur */
+    /* Outward bounce going up + scale + blur */
     @keyframes pulseOutwardBounce {
       0% {
         transform: translateY(0) scale(1);
@@ -222,30 +223,9 @@
           return;
         }
 
-        // allow space normally
-        if (key === " ") {
-          e.preventDefault();
-          if (content.length < 50) {
-            content += " ";
-            const span = document.createElement('span');
-            span.textContent = " ";
-            span.className = 'fade-in';
-            input.appendChild(span);
-            updateCounter();
-
-            resetTimers();
-
-            if (content.length === 50) {
-              pulseTimeout = setTimeout(() => triggerPulseThenDissolve(), 2000);
-            } else {
-              afkTimeout = setTimeout(() => triggerPulseThenDissolve(), 10000);
-            }
-          }
-          return;
-        }
-
         e.preventDefault();
 
+        // Allow space normally now, just add it like any other char
         const lowerKey = key.toLowerCase();
         content += lowerKey;
 
