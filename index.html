@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>text dissolve with jump and explode</title>
+<title>text dissolve delayed explode at max chars</title>
 <style>
   @font-face {
     font-family: 'Chiron Sung HK';
@@ -103,6 +103,7 @@
   const MAX_CHARS = 50;
   let pulseTimeout = null;
   let afkTimeout = null;
+  let maxCharTimeout = null; // new timer for 1.5s delay at max chars
 
   function updateCounter() {
     let text = input.textContent;
@@ -130,11 +131,15 @@
     const sel = window.getSelection();
     if(!sel.rangeCount) return;
     const range = sel.getRangeAt(0);
-    const startOffset = range.startOffset;
-    const startContainer = range.startContainer;
 
+    // Save caret position data
+    let startOffset = range.startOffset;
+    let startContainer = range.startContainer;
+
+    // Lowercase entire text content
     el.textContent = el.textContent.toLowerCase();
 
+    // Restore caret position carefully
     placeCaretAtEnd(el);
   }
 
@@ -189,7 +194,6 @@
 
     input.classList.add('pulse-jump');
 
-    // Wait for pulse animation end (600ms) then dissolve
     setTimeout(() => {
       dissolveText();
     }, 600);
@@ -198,12 +202,16 @@
   function resetTimers() {
     clearTimeout(pulseTimeout);
     clearTimeout(afkTimeout);
+    clearTimeout(maxCharTimeout);
 
-    if(input.textContent.length >= MAX_CHARS) {
-      // Pulse & explode immediately on max chars
-      triggerPulseThenDissolve();
-    } else if(input.textContent.length > 0) {
-      // Reset AFK timer to pulse & explode after 10s idle
+    const currentLength = input.textContent.length;
+
+    if(currentLength >= MAX_CHARS) {
+      // wait 1.5 seconds before exploding
+      maxCharTimeout = setTimeout(() => {
+        triggerPulseThenDissolve();
+      }, 1500);
+    } else if(currentLength > 0) {
       afkTimeout = setTimeout(() => {
         triggerPulseThenDissolve();
       }, 10000);
