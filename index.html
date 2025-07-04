@@ -1,167 +1,149 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>text ghost with spaces + outward jump fix</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://cdn.jsdelivr.net/gh/luxemberg/fonts/chiron-sung-hk/ChironSungHK-Regular.otf" rel="stylesheet" />
-
-  <style>
-    @font-face {
-      font-family: 'Chiron Sung HK';
-      src: url('https://cdn.jsdelivr.net/gh/luxemberg/fonts/chiron-sung-hk/ChironSungHK-Regular.otf') format('opentype');
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>text dissolve with spaces and pulse</title>
+<style>
+  @font-face {
+    font-family: 'Chiron Sung HK';
+    src: url('https://cdn.jsdelivr.net/gh/luxemberg/fonts/chiron-sung-hk/ChironSungHK-Regular.otf') format('opentype');
+  }
+  * {
+    margin: 0; padding: 0; box-sizing: border-box;
+    font-family: 'Chiron Sung HK', 'Noto Sans KR', serif;
+    text-transform: lowercase;
+    background: white;
+    color: black;
+  }
+  html, body {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+  #container {
+    position: relative;
+    width: 500px;
+    min-height: 140px;
+    padding: 20px 25px;
+    user-select: none;
+    overflow: visible;
+  }
+  #input {
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 1.75rem;
+    line-height: 1.4;
+    width: 100%;
+    min-height: 120px;
+    max-height: 140px;
+    white-space: normal;
+    overflow-wrap: break-word;
+    user-select: text;
+    caret-color: black;
+    resize: none;
+  }
+  #counter {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    font-family: 'Chiron Sung HK', serif;
+    color: #666;
+    font-size: 1rem;
+    pointer-events: none;
+  }
+  .pulse-jump {
+    animation: pulseOutwardBounce 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+    will-change: transform, filter;
+  }
+  @keyframes pulseOutwardBounce {
+    0% {
+      transform: translateY(0) scale(1);
+      filter: blur(0);
     }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Chiron Sung HK', 'Noto Sans KR', serif;
-      text-transform: lowercase;
-      background: white;
-      color: black;
+    40% {
+      transform: translateY(-20px) scale(1.15);
+      filter: blur(1.5px);
     }
-
-    body, html {
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
+    70% {
+      transform: translateY(-8px) scale(1.05);
+      filter: blur(0.5px);
     }
-
-    #container {
-      position: relative;
-      width: 420px;
-      height: 200px;
-      padding: 15px 20px;
-      display: flex;
-      align-items: flex-start;
-      /* Allow overflow visible so jump isn't clipped */
-      overflow: visible;
-      user-select: none;
+    100% {
+      transform: translateY(0) scale(1);
+      filter: blur(0);
     }
-
-    #input {
-      background: transparent;
-      border: none;
-      outline: none;
-      font-size: 1.8rem;
-      line-height: 1.4;
-      width: 100%;
-      height: 100%;
-      word-break: normal;
-      overflow-wrap: break-word;
-      position: relative;
-      white-space: normal;
-      user-select: text;
-      caret-color: black;
-      transform-style: preserve-3d;
-      max-width: 100%;
-      overflow-y: auto;
-      will-change: transform, filter;
-      resize: none;
-      overflow-x: hidden;
-    }
-
-    .fade-in {
-      opacity: 0;
-      display: inline-block;
-      animation: fadeInChar 0.3s ease-in forwards;
-    }
-
-    @keyframes fadeInChar {
-      from {
-        opacity: 0;
-        transform: scale(0.95);
-      }
-      to {
-        opacity: 1;
-        transform: scale(1);
-      }
-    }
-
-    .fade-piece {
-      position: fixed;
-      font-size: 1.8rem;
-      pointer-events: none;
-      opacity: 1;
-      transition: transform 1s ease, opacity 1.5s ease;
-      white-space: pre;
-      font-family: 'Chiron Sung HK', 'Noto Sans KR', serif;
-      color: black;
-      user-select: none;
-      z-index: 9999;
-      will-change: transform, opacity;
-    }
-
-    #counter {
-      position: absolute;
-      right: 8px;
-      top: 8px;
-      font-size: 1rem;
-      color: #666;
-      user-select: none;
-      font-family: 'Chiron Sung HK', serif;
-      text-transform: lowercase;
-      pointer-events: none;
-    }
-
-    /* Outward bounce going up + scale + blur */
-    @keyframes pulseOutwardBounce {
-      0% {
-        transform: translateY(0) scale(1);
-        filter: blur(0);
-      }
-      40% {
-        transform: translateY(-20px) scale(1.15);
-        filter: blur(1.5px);
-      }
-      70% {
-        transform: translateY(-8px) scale(1.05);
-        filter: blur(0.5px);
-      }
-      100% {
-        transform: translateY(0) scale(1);
-        filter: blur(0);
-      }
-    }
-
-    .pulse-jump {
-      animation: pulseOutwardBounce 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
-      transform-style: preserve-3d;
-      will-change: transform, filter;
-    }
-  </style>
+  }
+  .fade-piece {
+    position: fixed;
+    font-size: 1.75rem;
+    pointer-events: none;
+    opacity: 1;
+    transition: transform 1s ease, opacity 1.5s ease;
+    white-space: pre;
+    font-family: 'Chiron Sung HK', 'Noto Sans KR', serif;
+    color: black;
+    user-select: none;
+    z-index: 9999;
+    will-change: transform, opacity;
+  }
+</style>
 </head>
 <body>
   <div id="container">
-    <div id="input" contenteditable="true" spellcheck="false" autofocus></div>
+    <div id="input" contenteditable="true" spellcheck="false" autocorrect="off" autocomplete="off" autocapitalize="off"></div>
     <div id="counter">50</div>
   </div>
 
   <script>
-    const input = document.getElementById("input");
-    const counter = document.getElementById("counter");
-    let content = '';
+    const input = document.getElementById('input');
+    const counter = document.getElementById('counter');
     let pulseTimeout = null;
     let afkTimeout = null;
+    const MAX_CHARS = 50;
 
     function updateCounter() {
-      counter.textContent = 50 - content.length;
+      const text = input.textContent.toLowerCase();
+      if(text.length > MAX_CHARS) {
+        input.textContent = text.slice(0, MAX_CHARS);
+      }
+      counter.textContent = MAX_CHARS - input.textContent.length;
     }
 
     function dissolveText() {
       input.classList.remove('pulse-jump');
 
-      const spans = input.querySelectorAll('span');
-      spans.forEach(span => {
-        const rect = span.getBoundingClientRect();
+      const rect = input.getBoundingClientRect();
+      const text = input.textContent;
+
+      // Create pieces per character for dissolve effect
+      for(let i=0; i < text.length; i++) {
+        const char = text[i];
+        if(char === ' ') continue; // skip spaces for pieces
+
         const piece = document.createElement('span');
         piece.className = 'fade-piece';
-        piece.textContent = span.textContent;
-        piece.style.left = `${rect.left}px`;
-        piece.style.top = `${rect.top}px`;
+        piece.textContent = char;
+
+        // Approximate character position by splitting input content
+        const range = document.createRange();
+        const childNode = input.firstChild;
+        if(childNode) {
+          range.setStart(childNode, i);
+          range.setEnd(childNode, i + 1);
+          const charRect = range.getBoundingClientRect();
+
+          piece.style.left = `${charRect.left}px`;
+          piece.style.top = `${charRect.top}px`;
+        } else {
+          // fallback center
+          piece.style.left = `${rect.left + rect.width/2}px`;
+          piece.style.top = `${rect.top + rect.height/2}px`;
+        }
+
         document.body.appendChild(piece);
 
         const offsetX = (Math.random() - 0.5) * 300;
@@ -174,10 +156,9 @@
         });
 
         setTimeout(() => piece.remove(), 1800);
-      });
+      }
 
-      input.innerHTML = '';
-      content = '';
+      input.textContent = '';
       updateCounter();
     }
 
@@ -189,61 +170,18 @@
     function resetTimers() {
       clearTimeout(pulseTimeout);
       clearTimeout(afkTimeout);
+      if(input.textContent.length > 0) {
+        afkTimeout = setTimeout(() => triggerPulseThenDissolve(), 10000);
+      }
     }
 
-    document.addEventListener('keydown', (e) => {
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
-
-      const key = e.key;
-
-      if (key === "Enter") {
-        e.preventDefault();
-        return;
+    input.addEventListener('input', e => {
+      input.textContent = input.textContent.toLowerCase();
+      if(input.textContent.length > MAX_CHARS) {
+        input.textContent = input.textContent.slice(0, MAX_CHARS);
       }
-
-      if (key === "Backspace") {
-        e.preventDefault();
-        content = content.slice(0, -1);
-        if (input.lastChild) input.removeChild(input.lastChild);
-        updateCounter();
-
-        resetTimers();
-
-        if (content.length === 50) {
-          pulseTimeout = setTimeout(() => triggerPulseThenDissolve(), 2000);
-        } else if (content.length > 0) {
-          afkTimeout = setTimeout(() => triggerPulseThenDissolve(), 10000);
-        }
-        return;
-      }
-
-      if (key.length === 1) {
-        if (content.length >= 50) {
-          e.preventDefault();
-          return;
-        }
-
-        e.preventDefault();
-
-        // Allow space normally now, just add it like any other char
-        const lowerKey = key.toLowerCase();
-        content += lowerKey;
-
-        const span = document.createElement('span');
-        span.textContent = lowerKey;
-        span.className = 'fade-in';
-        input.appendChild(span);
-
-        updateCounter();
-
-        resetTimers();
-
-        if (content.length === 50) {
-          pulseTimeout = setTimeout(() => triggerPulseThenDissolve(), 2000);
-        } else {
-          afkTimeout = setTimeout(() => triggerPulseThenDissolve(), 10000);
-        }
-      }
+      updateCounter();
+      resetTimers();
     });
 
     updateCounter();
