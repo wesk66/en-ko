@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>text ghost</title>
+  <title>text ghost with counter</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://cdn.jsdelivr.net/gh/luxemberg/fonts/chiron-sung-hk/ChironSungHK-Regular.otf" rel="stylesheet" />
 
@@ -31,6 +31,7 @@
     }
 
     #container {
+      position: relative;
       width: 320px;
       height: 200px;
       padding: 10px 15px;
@@ -53,6 +54,8 @@
       overflow-wrap: break-word;
       position: relative;
       white-space: pre-wrap;
+      user-select: text;
+      caret-color: black;
     }
 
     .fade-in {
@@ -85,17 +88,35 @@
       z-index: 9999;
       will-change: transform, opacity;
     }
+
+    #counter {
+      position: absolute;
+      right: 8px;
+      top: 8px;
+      font-size: 1rem;
+      color: #666;
+      user-select: none;
+      font-family: 'Chiron Sung HK', serif;
+      text-transform: lowercase;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
   <div id="container">
     <div id="input" contenteditable="true" spellcheck="false" autofocus></div>
+    <div id="counter">50</div>
   </div>
 
   <script>
     const input = document.getElementById("input");
+    const counter = document.getElementById("counter");
     let content = '';
     let timeout = null;
+
+    function updateCounter() {
+      counter.textContent = 50 - content.length;
+    }
 
     function dissolveText() {
       const spans = input.querySelectorAll('span');
@@ -122,6 +143,7 @@
 
       input.innerHTML = '';
       content = '';
+      updateCounter();
     }
 
     document.addEventListener('keydown', (e) => {
@@ -138,6 +160,7 @@
         e.preventDefault();
         content = content.slice(0, -1);
         if (input.lastChild) input.removeChild(input.lastChild);
+        updateCounter();
         return;
       }
 
@@ -156,10 +179,14 @@
         span.className = 'fade-in';
         input.appendChild(span);
 
+        updateCounter();
+
         clearTimeout(timeout);
         timeout = setTimeout(() => dissolveText(), 2000);
       }
     });
+
+    updateCounter();
   </script>
 </body>
 </html>
